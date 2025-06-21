@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { useReactTable, getCoreRowModel, createColumnHelper } from '@tanstack/react-table';
+import { useTable, TableRow, TableCell } from '@adsk/alloy-react-table';
 
 const EventComponent = () => {
     const [headers, setHeaders] = useState([]);
@@ -36,8 +38,8 @@ const EventComponent = () => {
         <table>
             <thead>
                 <tr>
-                    {headers?.map((header, index) => (
-                        <th key={index}>{header}</th>
+                    {headers?.map((header) => (
+                        <th key={header.name}>{header.label}</th>
                     ))}
                 </tr>
             </thead>

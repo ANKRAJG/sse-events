@@ -31,8 +31,13 @@ const getUsersLimitedFields = (users) => {
 
 const getTableHeaders = (users) => {
     const headerWithoutId = users[0] ? Object.keys(users[0]).filter(key => key !== 'id') : [];
-    const headers = ['S.No'];
-    const hwi = headerWithoutId.map(header => header.charAt(0).toUpperCase() + header.slice(1));
+    const headers = [{ name: 'id', label: 'S.No'}];
+    const hwi = headerWithoutId.map(header => {
+        return {
+            name: header,
+            label: header.charAt(0).toUpperCase() + header.slice(1)
+        }
+    });
     return headers.concat(hwi);
 };
 
