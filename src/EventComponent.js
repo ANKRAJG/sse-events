@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 const EventComponent = () => {
-    const [message, setMessage] = useState();
+    const [headers, setHeaders] = useState([]);
+    const [data, setData] = useState([]);
 
     useEffect(() => {
         const eventSource = new EventSource('http://localhost:3000/events');
@@ -14,15 +15,52 @@ const EventComponent = () => {
 
         eventSource.onmessage = event => {
             const eventData = JSON.parse(event.data);
-            const newMessage = `${message} ${eventData.message}`;
-            setMessage(newMessage);
+            const newHeader = eventData.header;
+            if (newHeader) {
+                console.log('newHeader = ', newHeader);
+                setHeaders((prevHeaders) => [...prevHeaders, newHeader]);
+            }
+
+            const newUser = eventData.user;
+            if (newUser) {
+                console.log('newUser = ', newUser);
+                setData((prevData) => [...prevData, newUser]);
+            }
         }
 
         return () => eventSource.close();
-    }, [message]);
+    }, []);
 
   return (
-    <div>{message}</div>
+    <div>
+        <table>
+            <thead>
+                <tr>
+                    {headers?.map((header, index) => (
+                        <th key={index}>{header}</th>
+                    ))}
+                </tr>
+            </thead>
+            <tbody>
+                {data?.map((user, index) => (
+                    <tr key={index}>
+                        <td>{user.id}</td>
+                        <td>{user.firstName}</td>
+                        <td>{user.lastName}</td>
+                        <td>{user.maidenName}</td>
+                        <td>{user.age}</td>
+                        <td>{user.email}</td>
+                        <td>{user.phone}</td>
+                        <td>{user.username}</td>
+                        <td>{user.birthDate}</td>
+                        <td>{user.role}</td>
+                        <td>{user.height}</td>
+                        <td>{user.weight}</td>
+                    </tr>
+                ))}
+            </tbody>        
+        </table>
+    </div>
   );
 };
 

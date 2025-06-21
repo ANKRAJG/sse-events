@@ -7,16 +7,38 @@ const corsOptions = {
     origin: 'http://localhost:3001'
 };
 
-const characters ='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+var usersLimited = [];
+var headers = [];
 
-function generateString(length) {
-    let result = ' ';
-    const charactersLength = characters.length;
-    for ( let i = 0; i < length; i++ ) {
-        result += characters.charAt(Math.floor(Math.random() * charactersLength));
-    }
+const getUsersLimitedFields = (users) => {
+    return users.map(user => {
+        return {
+            id: user.id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            maidenName: user.maidenName,
+            age: user.age,
+            email: user.email,
+            phone: user.phone,
+            username: user.username,
+            birthDate: user.birthDate,
+            role: user.role,
+            height: user.height,
+            weight: user.weight,
+        };
+    });
+};
 
-    return result;
+const getTableHeaders = (users) => {
+    const headerWithoutId = users[0] ? Object.keys(users[0]).filter(key => key !== 'id') : [];
+    const headers = ['S.No'];
+    const hwi = headerWithoutId.map(header => header.charAt(0).toUpperCase() + header.slice(1));
+    return headers.concat(hwi);
+};
+
+const sendUserJsonProgressively = (users) => {
+    usersLimited = getUsersLimitedFields(users);
+    headers = getTableHeaders(usersLimited);
 }
 
 app.get('/events', cors(corsOptions), (req, res) => {
@@ -27,14 +49,33 @@ app.get('/events', cors(corsOptions), (req, res) => {
         'Connection': 'keep-alive'
     });
 
-    // send SSE every second
-    setInterval(() => {
-        const len = Math.floor((Math.random() * 10) + 1);
-        console.log('len = ', len);
-        const data = {message: `${generateString(len)}`};
-        console.log('sent = ', data);
-        res.write(`data: ${JSON.stringify(data)}\n\n`);
-    }, 50);
+    headers.forEach((header, i) => {
+        // send SSE every 50ms
+        setTimeout(() => {
+            const data1 = { header };
+            console.log('data1 = ', data1);
+            res.write(`data: ${JSON.stringify(data1)}\n\n`);
+        }, 50*i);
+    });
+
+    usersLimited.forEach((user, index) => {
+        // send SSE every 50ms
+        setTimeout(() => {
+            const data2 = { user };
+            console.log('data2 = ', data2);
+            res.write(`data: ${JSON.stringify(data2)}\n\n`);
+        }, 50*(index+headers.length));
+    });
 });
+
+// Function to simulate fetching user data
+const getUserData = async () => {
+    const res = await fetch('https://dummyjson.com/users');
+    const data = await res.json();
+    sendUserJsonProgressively(data.users);
+};  
+
+// Call the users API in the startup
+getUserData();
 
 app.listen(3000, () => console.log('Server is listening on port 3000'));
