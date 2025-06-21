@@ -55,7 +55,7 @@ app.get('/events', cors(corsOptions), (req, res) => {
             const data1 = { header };
             console.log('data1 = ', data1);
             res.write(`data: ${JSON.stringify(data1)}\n\n`);
-        }, 50*i);
+        }, 60*i);
     });
 
     usersLimited.forEach((user, index) => {
@@ -64,13 +64,13 @@ app.get('/events', cors(corsOptions), (req, res) => {
             const data2 = { user };
             console.log('data2 = ', data2);
             res.write(`data: ${JSON.stringify(data2)}\n\n`);
-        }, 50*(index+headers.length));
+        }, 60*(index+headers.length));
     });
 });
 
 // Function to simulate fetching user data
 const getUserData = async () => {
-    const res = await fetch('https://dummyjson.com/users');
+    const res = await fetch('https://dummyjson.com/users?skip=0&limit=20');
     const data = await res.json();
     sendUserJsonProgressively(data.users);
 };  
