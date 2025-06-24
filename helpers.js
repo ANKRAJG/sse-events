@@ -1,3 +1,9 @@
+export const FIXED_STREAM_TIME = 50; // in milliseconds
+
+export const getTableHeaders = (data) => {
+    return data[0] ? Object.keys(data[0]) : [];
+};
+
 export const getUsersLimitedFields = (items) => {
     return items.map(item => {
         return {
@@ -74,3 +80,14 @@ export const secondPara = [
     `</ol>`,
     `<p>Since the question specifically asks about concrete, I'll use the <code class="code-snips">trades_prediction</code> field as the primary filter, which has an AI-generated prediction of the trade. I'll also search for "concrete" in the title and description fields to catch any items that might not be properly classified in the trades_prediction.</p>`
 ];
+
+export const broadcastStreams = (stream, dataArr, key, iteratorAdder) => {
+    dataArr.forEach((item, i) => {
+        // send SSE every 50ms
+        setTimeout(() => {
+            const data = {};
+            data[key] = item;
+            stream.write(`data: ${JSON.stringify(data)}\n\n`);
+        }, FIXED_STREAM_TIME * (i + iteratorAdder));
+    });
+};

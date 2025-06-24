@@ -33,7 +33,7 @@ const EventComponent = () => {
         setIsUserFetching(true);
         try {
             usersCallCount.current = usersCallCount.current + 1;
-            await fetch(`http://localhost:3000/getUsers?skip=${offset*limit}&limit=${limit}&usercount=${usersCallCount.current}`);
+            await fetch(`https://localhost:3000/getUsers?skip=${offset*limit}&limit=${limit}&usercount=${usersCallCount.current}`);
             //const userData = await response.json();
             //console.log('response = ', JSON.parse(response));
             setUserData([]);
@@ -47,7 +47,7 @@ const EventComponent = () => {
         setIsProductFetching(true);
         try {
             productsCallCount.current = productsCallCount.current + 1;
-            await fetch(`http://localhost:3000/getProducts?skip=${offset*limit}&limit=${limit}&productcount=${productsCallCount.current}`);
+            await fetch(`https://localhost:3000/getProducts?skip=${offset*limit}&limit=${limit}&productcount=${productsCallCount.current}`);
             setProductData([]);
         } finally {
             setIsProductFetching(false);
@@ -57,7 +57,7 @@ const EventComponent = () => {
     useEffect(() => {
         if (isUserFetching) return; // Avoid fetching if data is already present
 
-        const eventSource = new EventSource('http://localhost:3000/events/rfis');
+        const eventSource = new EventSource('https://localhost:3002/events/rfis');
 
         if(typeof (eventSource) !== 'undefined') {
             console.log('successful!');
@@ -100,7 +100,7 @@ const EventComponent = () => {
     useEffect(() => {
         if (isUserFetching) return; // Avoid fetching if data is already present
 
-        const eventSource = new EventSource('http://localhost:3000/events/products');
+        const eventSource = new EventSource('https://localhost:3002/events/products');
 
         if(typeof (eventSource) !== 'undefined') {
             console.log('successful!');
