@@ -36,6 +36,14 @@ const sendProductJsonProgressively = (products, total) => {
     totalProductRecords = total;
 }
 
+export const streamingResponseHeaders = (res) => {
+    res.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive'
+    });
+}
+
 // Function to send RFI data related streams
 export const sendRFIsStreams = (stream, usersCallCount, productsCallCount, req) => {
     const reqStream = req ?? stream;
@@ -117,3 +125,18 @@ export const getProductData = async (skip = 0, limit = 10) => {
     sendProductJsonProgressively(data.products, data.total);
     return data;
 }; 
+
+export const sendHttpResponse = (req, res, fn) => {
+    res.writeHead(200, {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive'
+    });
+
+    const skip = req.query?.skip;
+    const limit = req.query?.limit;
+    fn(skip, limit).then(data => {
+        res.write(`data: ${JSON.stringify(data)}\n\n`);
+        res.end();
+    });
+};

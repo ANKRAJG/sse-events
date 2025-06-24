@@ -1,7 +1,7 @@
 import express from 'express';
 import https from 'https';
 import fs from 'fs';
-import { getProductData, getUserData, sendProductStreams, sendRFIsStreams } from './common-server.js';
+import { getProductData, getUserData, sendHttpResponse, sendProductStreams, sendRFIsStreams, streamingResponseHeaders } from './common-server-functions.js';
 
 var usersCallCount = 0, productsCallCount = 0;
 const app = express();
@@ -12,53 +12,23 @@ const corsOptions = {
 };
 
 app.get('/events/rfis', (req, res) => {
-    res.writeHead(200, {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive'
-    });
+    streamingResponseHeaders(res);
     sendRFIsStreams(res, usersCallCount, productsCallCount, req);
 });
 
 app.get('/events/products', (req, res) => {
-    res.writeHead(200, {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive'
-    });
+    streamingResponseHeaders(res);
     sendProductStreams(res, usersCallCount, productsCallCount, req);
 });
 
 app.get('/getUsers', (req, res) => {
-    res.writeHead(200, {
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive'
-    });
-
-    const userSkip = req.query?.skip;
-    const limit = req.query?.limit;
     usersCallCount = Number(req.query?.usercount);
-    getUserData(userSkip, limit).then(data => {
-        res.write(`data: ${JSON.stringify(data)}\n\n`);
-        res.end(); // Ensure the connection is closed
-    });
+    sendHttpResponse(req, res, getUserData);
 }); 
 
 app.get('/getProducts', (req, res) => {
-    res.writeHead(200, {
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive'
-    });
-
-    const productSkip = req.query?.skip;
-    const limit = req.query?.limit;
     productsCallCount = Number(req.query?.productcount);
-    getProductData(productSkip, limit).then(data => {
-        res.write(`data: ${JSON.stringify(data)}\n\n`);
-        res.end(); // Ensure the connection is closed
-    });
+    sendHttpResponse(req, res, getProductData);
 });
 
 // Create HTTPS server
