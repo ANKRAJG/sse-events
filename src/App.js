@@ -1,9 +1,12 @@
 import './App.css';
-import EventComponent from './EventComponent';
+import EventComponent from './EventComponent.js';
+import { LocaleProvider } from '@adsk/alloy-react-locale';
 
 function App() {
   return (
-    <EventComponent />
+    <LocaleProvider>
+      <EventComponent />
+    </LocaleProvider>
   );
 }
 

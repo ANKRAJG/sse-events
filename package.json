@@ -1,9 +1,13 @@
 {
   "name": "sse-events",
   "version": "0.1.0",
+  "type": "module",
   "private": true,
   "proxy": "http://localhost:3000",
   "dependencies": {
+    "@adsk/alloy-react-table": "^4.0.5",
+    "@hello-pangea/dnd": "^18.0.1",
+    "@tanstack/react-table": "^8.21.3",
     "cors": "^2.8.5",
     "cra-template": "1.2.0",
     "express": "^4.21.2",
