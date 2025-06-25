@@ -1,13 +1,21 @@
 import './App.css';
-import EventComponent from './EventComponent.js';
+import EventComponent from './components/EventComponent.js';
 import { LocaleProvider } from '@adsk/alloy-react-locale';
+import InputComponent from './components/InputComponent.js';
+import { EventProvider } from './providers/EventProvider.js';
 
-function App() {
+
+const App = () => {
   return (
     <LocaleProvider>
-      <EventComponent />
+      <EventProvider>
+        <div className="app-container">
+          <EventComponent />
+          <InputComponent />
+        </div>
+      </EventProvider>
     </LocaleProvider>
   );
-}
+};
 
 export default App;

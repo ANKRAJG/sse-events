@@ -9,7 +9,10 @@ import {
     getTableHeaders 
 } from './helpers.js';
 
-// Paras
+// Constants
+const EXTRA_TIME = 1000; // In milliseconds
+const INITIAL_CALL_NUMBER = 0;
+// Paragraphs
 var usersPara = [], productsPara = [];
 // AA Related Data
 var total_rfi_limited_data = getAALimitedFields(rfi_data.results);
@@ -19,7 +22,6 @@ var usersLimited = [], userHeaders = [], totalUserRecords = 0;
 var productsLimited = [], productHeaders = [], totalProductRecords = 0;
 // Common Var for Para1 Adder
 var para1Adder = 0;
-
 
 const sendUserJsonProgressively = (users, total) => {
     //usersLimited = getUsersLimitedFields(users);
@@ -47,7 +49,7 @@ export const streamingResponseHeaders = (res) => {
 // Function to send RFI data related streams
 export const sendRFIsStreams = (stream, usersCallCount, productsCallCount, req) => {
     const reqStream = req ?? stream;
-    const canCall = (usersCallCount===1 && productsCallCount===1);
+    const canCall = (usersCallCount===INITIAL_CALL_NUMBER && productsCallCount===INITIAL_CALL_NUMBER);
 
     // RFIs Para
     if(canCall) broadcastStreams(stream, usersPara, 'para1', 0);
@@ -78,27 +80,27 @@ export const sendRFIsStreams = (stream, usersCallCount, productsCallCount, req) 
 // Function to send Product data related streams
 export const sendProductStreams = (stream, usersCallCount, productsCallCount, req) => {
     const reqStream = req ?? stream;
-    const canCall = (usersCallCount===1 && productsCallCount===1);
+    const canCall = (usersCallCount===INITIAL_CALL_NUMBER && productsCallCount===INITIAL_CALL_NUMBER);
     const userAdder = canCall ? (para1Adder + userHeaders.length + usersLimited.length) : 0;
 
     // Products
     // Products Para
-    if(canCall) broadcastStreams(stream, productsPara, 'para2', userAdder);
+    if(canCall) broadcastStreams(stream, productsPara, 'para2', userAdder, EXTRA_TIME);
 
     const para2Adder = canCall ? (userAdder + secondPara.length) : 0;
     // Products Table Headers
-    if(canCall) broadcastStreams(stream, productHeaders, 'productHeader', para2Adder);
+    if(canCall) broadcastStreams(stream, productHeaders, 'productHeader', para2Adder, EXTRA_TIME);
 
     // Products Table data events row by row
     const iteratorAdder2 = para2Adder + productHeaders.length;
-    broadcastStreams(stream, productsLimited, 'product', iteratorAdder2);
+    broadcastStreams(stream, productsLimited, 'product', iteratorAdder2, EXTRA_TIME);
 
     // Products Table total records
     if(canCall) {
         setTimeout(() => {
             const data2 = { totalProductRecords };
             stream.write(`data: ${JSON.stringify(data2)}\n\n`);
-        }, FIXED_STREAM_TIME * (para2Adder + productHeaders.length));
+        }, (FIXED_STREAM_TIME * (para2Adder + productHeaders.length)) + EXTRA_TIME);
     }
 
     // Handle client disconnection

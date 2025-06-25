@@ -3,17 +3,23 @@ body {
     width: 100%;
 }
 
+.app-container {
+    height: calc(100vh - 150px);
+    overflow-y: auto;
+}
+
 .chat-container {
-    margin: 40px auto;
+    margin: 30px auto;
+    width: 75%;
     max-width: 75%;
+    padding-bottom: 75px;
 }
 
 .table-container {
-    max-height: 300px;
+    max-height: 350px;
     /* height: 300px; */
     border: 2px solid #bbb;
     width: 100%;
-    margin-bottom: 85px;
 }
 
 th {
@@ -51,9 +57,13 @@ table {
 }
 
 tbody {
-    max-height: 257px;
+    max-height: 307px;
     /* height: 257px; */
     overflow-y: auto;
+}
+
+.para-conatiner {
+    margin-top: 90px;
 }
 
 .pagination-footer {
@@ -85,4 +95,22 @@ tbody {
     color: red;
     font-family: "Source Code Pro", monospace;
     font-size: 0.9em;
+}
+
+.input-container {
+    position: fixed;
+    bottom: 0;
+    height: 150px;
+    width: 100%;
+    border-top: 1px solid #aaa;
+}
+
+.input-text-area {
+    width: 75%;
+    max-width: 75%;
+    margin: 25px auto !important;
+}
+
+.input-text-area textarea {
+    width: 98%;
 }

@@ -81,13 +81,13 @@ export const secondPara = [
     `<p>Since the question specifically asks about concrete, I'll use the <code class="code-snips">trades_prediction</code> field as the primary filter, which has an AI-generated prediction of the trade. I'll also search for "concrete" in the title and description fields to catch any items that might not be properly classified in the trades_prediction.</p>`
 ];
 
-export const broadcastStreams = (stream, dataArr, key, iteratorAdder) => {
+export const broadcastStreams = (stream, dataArr, key, iteratorAdder, extraTime=0) => {
     dataArr.forEach((item, i) => {
         // send SSE every 50ms
         setTimeout(() => {
             const data = {};
             data[key] = item;
             stream.write(`data: ${JSON.stringify(data)}\n\n`);
-        }, FIXED_STREAM_TIME * (i + iteratorAdder));
+        }, (FIXED_STREAM_TIME * (i + iteratorAdder)) + extraTime);
     });
 };
