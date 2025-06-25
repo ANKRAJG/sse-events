@@ -2,7 +2,7 @@ import express from 'express';
 import http2 from 'http2';
 import https from 'https';
 import fs from 'fs';
-import { getProductData, getUserData, sendHttpResponse, sendProductStreams, sendRFIsStreams } from './common-server-functions.js';
+import { getProductData, getUserData, sendHttpResponse, sendProductStreams, sendRFIsStreams } from './backend/common-server-functions.js';
 
 var usersCallCount = 0, productsCallCount = 0;
 const app = express();
