@@ -3,14 +3,17 @@ import https from 'https';
 import fs from 'fs';
 import { 
     getProductData, 
-    getUserData, 
+    getSubmittalData, 
+    getRFIData, 
     sendHttpResponse, 
     sendProductStreams, 
     sendRFIsStreams, 
+    sendSubmittalStreams, 
     streamingResponseHeaders 
 } from './backend/common-server-functions.js';
+import { INITIAL_CALL_NUMBER } from './backend/helpers.js';
 
-var usersCallCount = 0, productsCallCount = 0;
+var usersCallCount = 0, submittalsCallCount = 0, productsCallCount = 0;
 const app = express();
 const corsOptions = {
     key: fs.readFileSync('cert/server.key'),
@@ -18,22 +21,38 @@ const corsOptions = {
     origin: 'http://localhost:3001'
 };
 
+// Streaming APIs
 app.get('/events/rfis', (req, res) => {
     streamingResponseHeaders(res);
-    sendRFIsStreams(res, usersCallCount, productsCallCount, req);
+    const canCall = usersCallCount===INITIAL_CALL_NUMBER && submittalsCallCount===INITIAL_CALL_NUMBER && productsCallCount===INITIAL_CALL_NUMBER;
+    sendRFIsStreams(res, canCall, req);
+});
+
+app.get('/events/submittals', (req, res) => {
+    streamingResponseHeaders(res);
+    const canCall = usersCallCount===INITIAL_CALL_NUMBER && submittalsCallCount===INITIAL_CALL_NUMBER && productsCallCount===INITIAL_CALL_NUMBER;
+    sendSubmittalStreams(res, canCall, req);
 });
 
 app.get('/events/products', (req, res) => {
     streamingResponseHeaders(res);
-    sendProductStreams(res, usersCallCount, productsCallCount, req);
+    const canCall = usersCallCount===INITIAL_CALL_NUMBER && submittalsCallCount===INITIAL_CALL_NUMBER && productsCallCount===INITIAL_CALL_NUMBER;
+    sendProductStreams(res, canCall, req);
 });
 
-app.get('/getUsers', (req, res) => {
+
+// REST APIs
+app.get('/rfis', (req, res) => {
     usersCallCount = Number(req.query?.usercount);
-    sendHttpResponse(req, res, getUserData);
+    sendHttpResponse(req, res, getRFIData);
 }); 
 
-app.get('/getProducts', (req, res) => {
+app.get('/submittals', (req, res) => {
+    submittalsCallCount = Number(req.query?.submittalcount);
+    sendHttpResponse(req, res, getSubmittalData);
+});
+
+app.get('/products', (req, res) => {
     productsCallCount = Number(req.query?.productcount);
     sendHttpResponse(req, res, getProductData);
 });

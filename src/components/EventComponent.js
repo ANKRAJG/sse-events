@@ -5,6 +5,7 @@ const EventComponent = () => {
 
     const { 
         rfiHeaders, rfiPara, rfiData, totalRfiRecords, rfiPagination, setRfiPagination,
+        submittalsPara, submittalsHeaders, submittalsData, totalSubmittalsRecords, submittalsPagination, setSubmittalsPagination,
         productHeaders, productPara, productData, totalProductRecords, productPagination, setProductPagination,
     } = useEventProvider();
 
@@ -18,6 +19,17 @@ const EventComponent = () => {
                 pagination={rfiPagination}
                 setPagination={setRfiPagination}
                 totalRecords={totalRfiRecords}
+            />
+        )}
+
+        <div className="para-conatiner" dangerouslySetInnerHTML={{__html: submittalsPara}} />  
+        {submittalsHeaders.length > 0 && (
+            <CustomTable
+                columns={submittalsHeaders}
+                data={submittalsData}
+                pagination={submittalsPagination}
+                setPagination={setSubmittalsPagination}
+                totalRecords={totalSubmittalsRecords}
             />
         )}
 

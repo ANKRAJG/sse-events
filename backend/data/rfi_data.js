@@ -1,3 +1,13 @@
+export const rfiPara = [
+    `<p><strong>Reasoning:</strong> To find all <code class="code-snips-red">RFIs</code> related to concrete, I need to check multiple fields where concrete might be mentioned:</p>`,
+    `<ol>`,
+    `<li>The "disciplines" array field might contain 'Concrete' as a discipline</li>`,
+    `<li>The "building_components" array field might contain concrete-related components</li>`,
+    `<li>The "title" or "question" fields might mention concrete</li>`,
+    `</ol>`,
+    `<p>Since the user wants to see all RFIs related to concrete, I'll use OR conditions to include any RFI that matches any of these criteria. I'll return all columns as instructed.</p>`
+];
+
 export const rfi_data = {
   "pagination": {
     "limit": 10,

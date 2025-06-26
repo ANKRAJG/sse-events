@@ -1,4 +1,6 @@
+// Constants
 export const FIXED_STREAM_TIME = 50; // in milliseconds
+export const INITIAL_CALL_NUMBER = 0;
 
 export const getTableHeaders = (data) => {
     return data[0] ? Object.keys(data[0]) : [];
@@ -42,14 +44,14 @@ export const getProductsLimitedFields = (items) => {
     });
 };
 
-export const getAALimitedFields = (items) => {
+export const getRFILimitedFields = (items) => {
     return items.map(item => {
         return {
             id: item.data.display_id, 
             title: item.data.title,
-            status: item.data.status, 
-            assigneeUser: item.data.assignee_user_names, 
-            question: item.data.question, 
+            status: item.data.status,
+            assigneeUser: item.data.assignee_user_names,
+            question: item.data.question,
             priority: item.data.priority,
             location: item.data.location, 
             type: item.data.rfi_type, 
@@ -61,33 +63,38 @@ export const getAALimitedFields = (items) => {
     });
 };
 
-export const firstPara = [
-    `<p><strong>Reasoning:</strong> To find all <code class="code-snips-red">RFIs</code> related to concrete, I need to check multiple fields where concrete might be mentioned:</p>`,
-    `<ol>`,
-    `<li>The "disciplines" array field might contain 'Concrete' as a discipline</li>`,
-    `<li>The "building_components" array field might contain concrete-related components</li>`,
-    `<li>The "title" or "question" fields might mention concrete</li>`,
-    `</ol>`,
-    `<p>Since the user wants to see all RFIs related to concrete, I'll use OR conditions to include any RFI that matches any of these criteria. I'll return all columns as instructed.</p>`
+export const getSubmittalLimitedFields = (items) => {
+    return items.map(item => {
+        return {
+            id: item.data.display_id, 
+            title: item.data.title,
+            status: 'Open | Submitted', 
+            ballInCourt: item.data.ball_in_court_user_names, 
+            spec: `${item.data.spec_section_number} ${item.data.spec_section_title}`, 
+            type: item.data.type_value, 
+            priority: item.data.priority_value,
+            package: item.data.package_title, 
+            trade: item.data.trades_prediction,
+            discipline: item.data.discipline_prediction, 
+            buildingSystem: item.data.building_system_prediction, 
+            buildingSubsystem: item.data.building_subsystem_prediction, 
+        };
+    });
+};
+
+export const schedulesPara = [
+    `<p><strong>Reasoning:</strong> The question asks for all <code class="code-snips-red">Schedule</code> activities related to concrete. Looking at the schema, I can see that "concrete" could be found in the trades_prediction column, which contains AI-generated trade classifications. According to the SQL tips, when a question mentions a trade, I should filter on trades_prediction.</p>`,  
+    `<p>The trades_prediction column has a possible value of 'concrete', which is what we need to filter on. Since we want to see all details about these activities, I'll use SELECT * to return all columns for activities where the trades_prediction is 'concrete'.</p>`
 ];
 
-export const secondPara = [
-    `<p><strong>Reasoning:</strong> To find <code class="code-snips-red">Submittals</code> related to concrete, I need to check where "concrete" might be mentioned in the database. Looking at the schema, I can see several potential fields where concrete might be referenced:</p>`,
-    `<ol>`,
-    `<li>The <code class="code-snips">trades_prediction</code> column has "concrete" as one of its possible values</li>`,
-    `<li>The <code class="code-snips">title</code> and <code class="code-snips">description</code> fields might contain the word "concrete"</li>`,
-    `<li>The <code class="code-snips">spec_section_title</code> might reference concrete</li>`,
-    `</ol>`,
-    `<p>Since the question specifically asks about concrete, I'll use the <code class="code-snips">trades_prediction</code> field as the primary filter, which has an AI-generated prediction of the trade. I'll also search for "concrete" in the title and description fields to catch any items that might not be properly classified in the trades_prediction.</p>`
-];
-
-export const broadcastStreams = (stream, dataArr, key, iteratorAdder, extraTime=0) => {
+export const broadcastStreams = (stream, dataArr, key, iteratorAdder, extraTime=0, canCall) => {
+    const extra_time_wait = canCall ? extraTime : 0;
     dataArr.forEach((item, i) => {
         // send SSE every 50ms
         setTimeout(() => {
             const data = {};
             data[key] = item;
             stream.write(`data: ${JSON.stringify(data)}\n\n`);
-        }, (FIXED_STREAM_TIME * (i + iteratorAdder)) + extraTime);
+        }, (FIXED_STREAM_TIME * (i + iteratorAdder)) + extra_time_wait);
     });
 };

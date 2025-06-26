@@ -1,20 +1,19 @@
 import './App.css';
 import EventComponent from './components/EventComponent.js';
-import { LocaleProvider } from '@adsk/alloy-react-locale';
 import InputComponent from './components/InputComponent.js';
-import { EventProvider } from './providers/EventProvider.js';
+import QuestionComponent from './components/QuestionComponent.js';
+import { useEventProvider } from './providers/EventProvider.js';
 
 
 const App = () => {
+  const { question } = useEventProvider();
+
   return (
-    <LocaleProvider>
-      <EventProvider>
-        <div className="app-container">
-          <EventComponent />
-          <InputComponent />
-        </div>
-      </EventProvider>
-    </LocaleProvider>
+    <div className="app-container">
+      {question && <QuestionComponent /> }
+      <EventComponent />
+      <InputComponent />
+    </div>
   );
 };
 

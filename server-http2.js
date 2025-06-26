@@ -2,9 +2,10 @@ import express from 'express';
 import http2 from 'http2';
 import https from 'https';
 import fs from 'fs';
-import { getProductData, getUserData, sendHttpResponse, sendProductStreams, sendRFIsStreams } from './backend/common-server-functions.js';
+import { getProductData, getSubmittalData, getRFIData, sendHttpResponse, sendProductStreams, sendRFIsStreams, sendSubmittalStreams } from './backend/common-server-functions.js';
+import { INITIAL_CALL_NUMBER } from './backend/helpers.js';
 
-var usersCallCount = 0, productsCallCount = 0;
+var usersCallCount = 0, submittalsCallCount = 0, productsCallCount = 0;
 const app = express();
 const corsOptions = {
     key: fs.readFileSync('cert/server.key'),
@@ -20,22 +21,33 @@ http2Server.on('stream', (stream, headers) => {
         'content-type': 'text/event-stream',
     });
 
+    const canCall = usersCallCount===INITIAL_CALL_NUMBER && submittalsCallCount===INITIAL_CALL_NUMBER && productsCallCount===INITIAL_CALL_NUMBER;
+
     if (headers[':path'] === '/events/rfis') {
-        sendRFIsStreams(stream, usersCallCount, productsCallCount);
+        sendRFIsStreams(stream, canCall);
+    }
+
+    if (headers[':path'] === '/events/submittals') {
+        sendSubmittalStreams(stream, canCall);
     }
 
     if (headers[':path'] === '/events/products') {
-        sendProductStreams(stream, usersCallCount, productsCallCount);
+        sendProductStreams(stream, canCall);
     }
 });
 
 // Normal HTTPS REST APIs
-app.get('/getUsers', (req, res) => {
+app.get('/rfis', (req, res) => {
     usersCallCount = Number(req.query?.usercount);
-    sendHttpResponse(req, res, getUserData);
+    sendHttpResponse(req, res, getRFIData);
 }); 
 
-app.get('/getProducts', (req, res) => {
+app.get('/submittals', (req, res) => {
+    submittalsCallCount = Number(req.query?.submittalcount);
+    sendHttpResponse(req, res, getSubmittalData);
+});
+
+app.get('/products', (req, res) => {
     productsCallCount = Number(req.query?.productcount);
     sendHttpResponse(req, res, getProductData);
 });

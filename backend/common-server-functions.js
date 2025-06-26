@@ -1,36 +1,42 @@
-import { rfi_data } from './data.js';
+import { rfiPara, rfi_data } from './data/rfi_data.js';
+import { submittalPara, submittals_data } from './data/submittals_data.js';
 import { 
     getProductsLimitedFields, 
-    firstPara, 
-    secondPara, 
-    getAALimitedFields, 
+    schedulesPara, 
+    getRFILimitedFields, 
     broadcastStreams, 
     FIXED_STREAM_TIME,
-    getTableHeaders 
+    getTableHeaders, 
+    getSubmittalLimitedFields
 } from './helpers.js';
 
 // Constants
-const EXTRA_TIME = 1000; // In milliseconds
-const INITIAL_CALL_NUMBER = 0;
+const EXTRA_TIME = 800; // In milliseconds
 // Paragraphs
-var usersPara = [], productsPara = [];
 // AA Related Data
-var total_rfi_limited_data = getAALimitedFields(rfi_data.results);
-// Variables for users
-var usersLimited = [], userHeaders = [], totalUserRecords = 0;
+var total_rfi_limited_data = getRFILimitedFields(rfi_data.results);
+var total_submittal_limited_data = getSubmittalLimitedFields(submittals_data.results);
+// Variables for RFIs
+var rfisLimited = [], rfiHeaders = [], totalRfiRecords = 0;
+// Variables for Submittals
+var submittalsLimited = [], submittalHeaders = [], totalSubmittalRecords = 0;
 // Variables for products
 var productsLimited = [], productHeaders = [], totalProductRecords = 0;
 // Common Var for Para1 Adder
-var para1Adder = 0;
+var para1Adder = 0, para2Adder = 0;
 
-const sendUserJsonProgressively = (users, total) => {
+const sendRFIJsonProgressively = (rfis, total) => {
     //usersLimited = getUsersLimitedFields(users);
-    usersLimited = users;
-    userHeaders = getTableHeaders(usersLimited);
-    totalUserRecords = total;
-    usersPara = firstPara;
-    productsPara = secondPara;
-}
+    rfisLimited = rfis;
+    rfiHeaders = getTableHeaders(rfisLimited);
+    totalRfiRecords = total;
+};
+
+const sendSubmittalsJsonProgressively = (submittals, total) => {
+    submittalsLimited = submittals;
+    submittalHeaders = getTableHeaders(submittalsLimited);
+    totalSubmittalRecords = total;
+};
 
 const sendProductJsonProgressively = (products, total) => {
     productsLimited = getProductsLimitedFields(products);
@@ -47,27 +53,58 @@ export const streamingResponseHeaders = (res) => {
 }
 
 // Function to send RFI data related streams
-export const sendRFIsStreams = (stream, usersCallCount, productsCallCount, req) => {
+export const sendRFIsStreams = (stream, canCall, req) => {
     const reqStream = req ?? stream;
-    const canCall = (usersCallCount===INITIAL_CALL_NUMBER && productsCallCount===INITIAL_CALL_NUMBER);
 
     // RFIs Para
-    if(canCall) broadcastStreams(stream, usersPara, 'para1', 0);
+    if(canCall) broadcastStreams(stream, rfiPara, 'rfiPara', 0);
 
-    para1Adder = canCall ? firstPara.length : 0;
+    para1Adder = canCall ? rfiPara.length : 0;
     // RFIs Table Headers
-    if(canCall) broadcastStreams(stream, userHeaders, 'userHeader', para1Adder);
+    if(canCall) broadcastStreams(stream, rfiHeaders, 'rfiHeader', para1Adder);
 
     // RFIs Table data events row by row
-    const iteratorAdder1 = para1Adder + userHeaders.length;
-    broadcastStreams(stream, usersLimited, 'user', iteratorAdder1);
+    const iteratorAdder1 = para1Adder + rfiHeaders.length;
+    broadcastStreams(stream, rfisLimited, 'rfi', iteratorAdder1);
 
     // RFIs Table total records
     if(canCall) {
         setTimeout(() => {
-            const data1 = { totalUserRecords };
+            const data1 = { totalRfiRecords };
             stream.write(`data: ${JSON.stringify(data1)}\n\n`);
-        }, FIXED_STREAM_TIME * (para1Adder + userHeaders.length));
+        }, FIXED_STREAM_TIME * (para1Adder + rfiHeaders.length));
+    }
+
+    // Handle client disconnection
+    reqStream.on('close', () => {
+        console.log('Client disconnected. Cleaning up...');
+        stream.end(); // Ensure the connection is closed
+    });
+};
+
+// Function to send Submittals data related streams
+export const sendSubmittalStreams = (stream, canCall, req) => {
+    const reqStream = req ?? stream;
+    const rfiAdder = canCall ? (para1Adder + rfiHeaders.length + rfisLimited.length) : 0;
+
+    // RFIs Para
+    if(canCall) broadcastStreams(stream, submittalPara, 'submittalPara', rfiAdder, EXTRA_TIME, canCall);
+
+    para2Adder = canCall ? (rfiAdder + submittalPara.length) : 0;
+    // RFIs Table Headers
+    if(canCall) broadcastStreams(stream, submittalHeaders, 'submittalHeader', para2Adder, EXTRA_TIME, canCall);
+
+    // RFIs Table data events row by row
+    const iteratorAdder2 = para2Adder + submittalHeaders.length;
+    broadcastStreams(stream, submittalsLimited, 'submittal', iteratorAdder2, EXTRA_TIME, canCall);
+
+    // RFIs Table total records
+    if(canCall) {
+        const extra_time_wait = canCall ? EXTRA_TIME : 0;
+        setTimeout(() => {
+            const data1 = { totalSubmittalRecords };
+            stream.write(`data: ${JSON.stringify(data1)}\n\n`);
+        }, (FIXED_STREAM_TIME * (para2Adder + submittalHeaders.length)) + extra_time_wait);
     }
 
     // Handle client disconnection
@@ -78,29 +115,29 @@ export const sendRFIsStreams = (stream, usersCallCount, productsCallCount, req) 
 };
 
 // Function to send Product data related streams
-export const sendProductStreams = (stream, usersCallCount, productsCallCount, req) => {
+export const sendProductStreams = (stream, canCall, req) => {
     const reqStream = req ?? stream;
-    const canCall = (usersCallCount===INITIAL_CALL_NUMBER && productsCallCount===INITIAL_CALL_NUMBER);
-    const userAdder = canCall ? (para1Adder + userHeaders.length + usersLimited.length) : 0;
+    const product_extra_time = 2 * EXTRA_TIME;
+    const submittalsAdder = canCall ? (para2Adder + submittalHeaders.length + submittalsLimited.length) : 0;
 
-    // Products
     // Products Para
-    if(canCall) broadcastStreams(stream, productsPara, 'para2', userAdder, EXTRA_TIME);
+    if(canCall) broadcastStreams(stream, schedulesPara, 'schedulesPara', submittalsAdder, product_extra_time, canCall);
 
-    const para2Adder = canCall ? (userAdder + secondPara.length) : 0;
+    const para3Adder = canCall ? (submittalsAdder + schedulesPara.length) : 0;
     // Products Table Headers
-    if(canCall) broadcastStreams(stream, productHeaders, 'productHeader', para2Adder, EXTRA_TIME);
+    if(canCall) broadcastStreams(stream, productHeaders, 'productHeader', para3Adder, product_extra_time, canCall);
 
     // Products Table data events row by row
-    const iteratorAdder2 = para2Adder + productHeaders.length;
-    broadcastStreams(stream, productsLimited, 'product', iteratorAdder2, EXTRA_TIME);
+    const iteratorAdder3 = para3Adder + productHeaders.length;
+    broadcastStreams(stream, productsLimited, 'product', iteratorAdder3, product_extra_time, canCall);
 
     // Products Table total records
     if(canCall) {
+        const extra_time_wait = canCall ? product_extra_time : 0;
         setTimeout(() => {
             const data2 = { totalProductRecords };
             stream.write(`data: ${JSON.stringify(data2)}\n\n`);
-        }, (FIXED_STREAM_TIME * (para2Adder + productHeaders.length)) + EXTRA_TIME);
+        }, (FIXED_STREAM_TIME * (para3Adder + productHeaders.length)) + extra_time_wait);
     }
 
     // Handle client disconnection
@@ -110,13 +147,22 @@ export const sendProductStreams = (stream, usersCallCount, productsCallCount, re
     });
 };
 
-// Function to simulate fetching user data
-export const getUserData = async (skip = 0, limit = 10) => {
+// Function to simulate fetching RFIs data
+export const getRFIData = async (skip = 0, limit = 10) => {
     const res = await fetch(`https://dummyjson.com/users?skip=${skip}&limit=${limit}`);
     const data = await res.json();
     const filtered_res = total_rfi_limited_data.slice(Number(skip), Number(skip) + Number(limit));
-    sendUserJsonProgressively(filtered_res, total_rfi_limited_data.length);
+    sendRFIJsonProgressively(filtered_res, total_rfi_limited_data.length);
     //sendUserJsonProgressively(data.users, data.total);
+    return data;
+}; 
+
+// Function to simulate fetching Submittals data
+export const getSubmittalData = async (skip = 0, limit = 10) => {
+    const res = await fetch(`https://dummyjson.com/users?skip=${skip}&limit=${limit}`);
+    const data = await res.json();
+    const filtered_res = total_submittal_limited_data.slice(Number(skip), Number(skip) + Number(limit));
+    sendSubmittalsJsonProgressively(filtered_res, total_submittal_limited_data.length);
     return data;
 }; 
 

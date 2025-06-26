@@ -4,15 +4,35 @@ body {
 }
 
 .app-container {
-    height: calc(100vh - 150px);
+    height: calc(100vh - 260px);
     overflow-y: auto;
+    position: relative;
+    top: 110px;
+}
+
+.question-container {
+    width: 80%;
+    max-width: 80%;
+    margin: 30px auto 20px;
+    position: fixed;
+    top: 0;
+    left: 10%;
+}
+
+.question-inner {
+    padding: 25px 30px;
+    border-radius: 20px;
+    background-color: #eee;
+    border: 1px solid #ccc;
+    max-height: 20px;
+    width: 100%;
 }
 
 .chat-container {
-    margin: 30px auto;
+    margin: 30px auto 20px;
     width: 75%;
     max-width: 75%;
-    padding-bottom: 75px;
+    padding-bottom: 1px;
 }
 
 .table-container {
@@ -20,6 +40,7 @@ body {
     /* height: 300px; */
     border: 2px solid #bbb;
     width: 100%;
+    margin-bottom: 80px;
 }
 
 th {
@@ -60,10 +81,6 @@ tbody {
     max-height: 307px;
     /* height: 257px; */
     overflow-y: auto;
-}
-
-.para-conatiner {
-    margin-top: 90px;
 }
 
 .pagination-footer {

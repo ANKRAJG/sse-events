@@ -2,36 +2,57 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState } f
 import useGetEventsData from "../hooks/useGetEventsData.js";
 
 const PAGE_LIMIT = 10; // Default page size
+const INITIAL_PAGINATION = { pageIndex: 0, pageSize: PAGE_LIMIT };
+const STREAM_API_URL = 'https://localhost:3002';
 
 const EventContext = createContext({});
 
 const EventProvider = ({children}) => {
     // Refs
     const rfiCallCountRef = useRef(0);
+    const submittalCallCountRef = useRef(0);
     const productCallCountRef = useRef(0);
+
+    // Common States
+    const [question, setQuestion] = useState(''); 
 
     // RFI States
     const [rfiPara, setRfiPara] = useState('');
     const [rfiHeaders, setRfiHeaders] = useState([]);
     const [rfiData, setRfiData] = useState([]);
     const [totalRfiRecords, setTotalRfiRecords] = useState(0);
-    const [rfiPagination, setRfiPagination] = useState({ pageIndex: 0, pageSize: PAGE_LIMIT });
+    const [rfiPagination, setRfiPagination] = useState(INITIAL_PAGINATION);
+    // Sunmittals States
+    const [submittalsPara, setSubmittalsPara] = useState('');
+    const [submittalsHeaders, setSubmittalsHeaders] = useState([]);
+    const [submittalsData, setSubmittalsData] = useState([]);
+    const [totalSubmittalsRecords, setTotalSubmittalsRecords] = useState(0);
+    const [submittalsPagination, setSubmittalsPagination] = useState(INITIAL_PAGINATION);
     // Product States
     const [productPara, setProductPara] = useState('');
     const [productHeaders, setProductHeaders] = useState([]);
     const [productData, setProductData] = useState([]);
-    const [productPagination, setProductPagination] = useState({ pageIndex: 0, pageSize: PAGE_LIMIT });
+    const [productPagination, setProductPagination] = useState(INITIAL_PAGINATION);
     const [totalProductRecords, setTotalProductRecords] = useState(0);
 
     // Hooks
     const { 
         isRFIFetching,
         getRFIData, 
+        isSubmittalsFetching,
+        getSubmittalsData,
         isProductFetching,
         getProductData 
     } = useGetEventsData();
     
     const getEventsData = (inputText) => {
+        if(!inputText) return;
+
+        setQuestion(inputText);
+        setRfiPagination(INITIAL_PAGINATION);
+        setProductPagination(INITIAL_PAGINATION);
+
+        // RFIs Call
         rfiCallCountRef.current = 0;
         getRFIData(rfiPagination.pageIndex, rfiPagination.pageSize, rfiCallCountRef.current, () => {
             setRfiPara('');
@@ -40,6 +61,16 @@ const EventProvider = ({children}) => {
             rfiCallCountRef.current = rfiCallCountRef.current + 1;
         });
 
+        // Submittals Call
+        submittalCallCountRef.current = 0;
+        getSubmittalsData(submittalsPagination.pageIndex, submittalsPagination.pageSize, submittalCallCountRef.current, () => {
+            setSubmittalsPara('');
+            setSubmittalsHeaders([]);
+            setSubmittalsData([]);
+            submittalCallCountRef.current = submittalCallCountRef.current + 1;
+        });
+
+        // Products Call
         productCallCountRef.current = 0;
         getProductData(productPagination.pageIndex, productPagination.pageSize, productCallCountRef.current, () => {
             setProductPara('');
@@ -61,15 +92,15 @@ const EventProvider = ({children}) => {
     }, []);
 
     useEffect(() => {
-        if(rfiCallCountRef.current<=1 && productCallCountRef.current<=1) {
+        if(rfiCallCountRef.current<=1 && submittalCallCountRef.current<=1 && productCallCountRef.current<=1) {
             scrollToBottom();
         }
-    }, [scrollToBottom, rfiPara, rfiData, productPara, productData]);
+    }, [scrollToBottom, rfiPara, rfiData, submittalsPara, submittalsData, productPara, productData]);
 
     useEffect(() => {
         if (isRFIFetching || rfiCallCountRef.current===0) return; // Avoid fetching if data is already present
 
-        const eventSource = new EventSource('https://localhost:3002/events/rfis');
+        const eventSource = new EventSource(`${STREAM_API_URL}/events/rfis`);
 
         if(typeof (eventSource) !== 'undefined') {
             console.log('successful!');
@@ -80,7 +111,7 @@ const EventProvider = ({children}) => {
         eventSource.onmessage = event => {
             const eventData = JSON.parse(event.data);
             const { 
-                para1: rfiText, userHeader: newRfiHeader, user: newRfi, totalUserRecords: totalRfiRecs,
+                rfiPara: rfiText, rfiHeader: newRfiHeader, rfi: newRfi, totalUserRecords: totalRfiRecs,
             } = eventData;
 
             if (rfiText) {
@@ -110,9 +141,9 @@ const EventProvider = ({children}) => {
     }, [isRFIFetching]);
 
     useEffect(() => {
-        if (isProductFetching || productCallCountRef.current===0) return; // Avoid fetching if data is already present
+        if (isSubmittalsFetching || submittalCallCountRef.current===0) return; // Avoid fetching if data is already present
 
-        const eventSource = new EventSource('https://localhost:3002/events/products');
+        const eventSource = new EventSource(`${STREAM_API_URL}/events/submittals`);
 
         if(typeof (eventSource) !== 'undefined') {
             console.log('successful!');
@@ -123,7 +154,50 @@ const EventProvider = ({children}) => {
         eventSource.onmessage = event => {
             const eventData = JSON.parse(event.data);
             const { 
-                para2: productText, productHeader: newProductHeader, product: newProduct, totalProductRecords: totalProducts
+                submittalPara: submittalText, submittalHeader: newSubmittalHeader, submittal: newSubmittal, totalSubmittalRecords: totalSubmittalRecs,
+            } = eventData;
+
+            if (submittalText) {
+                console.log('submittalText = ', submittalText);
+                setSubmittalsPara((prevPara) => prevPara + submittalText);
+            }
+
+            if (newSubmittalHeader) {
+                console.log('newSubmittalHeader = ', newSubmittalHeader);
+                setSubmittalsHeaders((prevHeaders) => [...prevHeaders, newSubmittalHeader]);
+            }
+
+            if (newSubmittal) {
+                console.log('newSubmittal = ', newSubmittal);
+                setSubmittalsData((prevData) => [...prevData, newSubmittal]);
+            }
+
+            if(totalSubmittalRecs) {
+                console.log('totalSubmittalRecs = ', totalSubmittalRecs);
+                setTotalSubmittalsRecords(totalSubmittalRecs);
+            }
+        }
+
+        return () => {
+            eventSource.close();
+        };
+    }, [isSubmittalsFetching]);
+
+    useEffect(() => {
+        if (isProductFetching || productCallCountRef.current===0) return; // Avoid fetching if data is already present
+
+        const eventSource = new EventSource(`${STREAM_API_URL}/events/products`);
+
+        if(typeof (eventSource) !== 'undefined') {
+            console.log('successful!');
+        } else {
+            console.log('no response!');
+        }
+
+        eventSource.onmessage = event => {
+            const eventData = JSON.parse(event.data);
+            const { 
+                schedulesPara: productText, productHeader: newProductHeader, product: newProduct, totalProductRecords: totalProducts
             } = eventData;
 
             if (productText) {
@@ -163,6 +237,16 @@ const EventProvider = ({children}) => {
     }, [rfiPagination.pageIndex, getRFIData]);
 
     useEffect(() => {
+        if (isSubmittalsFetching || submittalCallCountRef.current===0) return;
+
+        // Fetch RFI data from the server
+        submittalCallCountRef.current = submittalCallCountRef.current + 1;
+        getSubmittalsData(submittalsPagination.pageIndex, submittalsPagination.pageSize, submittalCallCountRef.current, () => {
+            setSubmittalsData([]);
+        });
+    }, [submittalsPagination.pageIndex, getSubmittalsData]);
+
+    useEffect(() => {
         if (isProductFetching || productCallCountRef.current===0) return;
 
         // Fetch product data from the server
@@ -174,8 +258,10 @@ const EventProvider = ({children}) => {
 
     return (
         <EventContext.Provider value={{
-            rfiCallCountRef, rfiPara, rfiHeaders, rfiData, totalRfiRecords, rfiPagination, setRfiPagination,
-            productCallCountRef, productPara, productHeaders, productData, totalProductRecords, productPagination, setProductPagination,
+            question, setQuestion,
+            rfiPara, rfiHeaders, rfiData, totalRfiRecords, rfiPagination, setRfiPagination,
+            submittalsPara, submittalsHeaders, submittalsData, totalSubmittalsRecords, submittalsPagination, setSubmittalsPagination,
+            productPara, productHeaders, productData, totalProductRecords, productPagination, setProductPagination,
             getEventsData
         }}>
             {children}
