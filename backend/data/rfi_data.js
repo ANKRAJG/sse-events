@@ -1,5 +1,5 @@
 export const rfiPara = [
-    `<p><strong>Reasoning:</strong> To find all <code class="code-snips-red">RFIs</code> related to concrete, I need to check multiple fields where concrete might be mentioned:</p>`,
+    `<p><strong>RFIs:</strong> To find all <code class="code-snips-red">RFIs</code> related to concrete, I need to check multiple fields where concrete might be mentioned:</p>`,
     `<ol>`,
     `<li>The "disciplines" array field might contain 'Concrete' as a discipline</li>`,
     `<li>The "building_components" array field might contain concrete-related components</li>`,

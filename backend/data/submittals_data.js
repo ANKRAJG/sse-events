@@ -1,5 +1,5 @@
 export const submittalPara = [
-    `<p><strong>Reasoning:</strong> To find <code class="code-snips-red">Submittals</code> related to concrete, I need to check where "concrete" might be mentioned in the database. Looking at the schema, I can see several potential fields where concrete might be referenced:</p>`,
+    `<p><strong>Submittals:</strong> To find <code class="code-snips-red">Submittals</code> related to concrete, I need to check where "concrete" might be mentioned in the database. Looking at the schema, I can see several potential fields where concrete might be referenced:</p>`,
     `<ol>`,
     `<li>The <code class="code-snips">trades_prediction</code> column has "concrete" as one of its possible values</li>`,
     `<li>The <code class="code-snips">title</code> and <code class="code-snips">description</code> fields might contain the word "concrete"</li>`,

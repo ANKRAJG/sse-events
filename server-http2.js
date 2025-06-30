@@ -2,10 +2,10 @@ import express from 'express';
 import http2 from 'http2';
 import https from 'https';
 import fs from 'fs';
-import { getProductData, getSubmittalData, getRFIData, sendHttpResponse, sendProductStreams, sendRFIsStreams, sendSubmittalStreams } from './backend/common-server-functions.js';
+import { getProductData, getSubmittalData, getRFIData, sendHttpResponse, sendProductStreams, sendRFIsStreams, sendSubmittalStreams, getIssuesData, sendIssuesStreams } from './backend/common-server-functions.js';
 import { INITIAL_CALL_NUMBER } from './backend/helpers.js';
 
-var usersCallCount = 0, submittalsCallCount = 0, productsCallCount = 0;
+var usersCallCount = 0, submittalsCallCount = 0, productsCallCount = 0, issuesCallCount = 0;
 const app = express();
 const corsOptions = {
     key: fs.readFileSync('cert/server.key'),
@@ -21,7 +21,7 @@ http2Server.on('stream', (stream, headers) => {
         'content-type': 'text/event-stream',
     });
 
-    const canCall = usersCallCount===INITIAL_CALL_NUMBER && submittalsCallCount===INITIAL_CALL_NUMBER && productsCallCount===INITIAL_CALL_NUMBER;
+    const canCall = usersCallCount===INITIAL_CALL_NUMBER && submittalsCallCount===INITIAL_CALL_NUMBER && productsCallCount===INITIAL_CALL_NUMBER && issuesCallCount===INITIAL_CALL_NUMBER;
 
     if (headers[':path'] === '/events/rfis') {
         sendRFIsStreams(stream, canCall);
@@ -33,6 +33,10 @@ http2Server.on('stream', (stream, headers) => {
 
     if (headers[':path'] === '/events/products') {
         sendProductStreams(stream, canCall);
+    }
+
+    if (headers[':path'] === '/events/issues') {
+         sendIssuesStreams(stream, canCall);
     }
 });
 
@@ -50,6 +54,11 @@ app.get('/submittals', (req, res) => {
 app.get('/products', (req, res) => {
     productsCallCount = Number(req.query?.productcount);
     sendHttpResponse(req, res, getProductData);
+});
+
+app.get('/issues', (req, res) => {
+    issuesCallCount = Number(req.query?.issuescount);
+    sendHttpResponse(req, res, getIssuesData);
 });
 
 // Create HTTPS server

@@ -5,6 +5,7 @@ const useGetEventsData = () => {
     const [isRFIFetching, setIsRFIFetching] = useState(false);
     const [isSubmittalsFetching, setIsSubmittalsFetching] = useState(false);
     const [isProductFetching, setIsProductFetching] = useState(false);
+    const [isIssuesFetching, setIsIssuesFetching] = useState(false);
 
     const getRFIData = useCallback(async (offset, limit, rfiCallCount, cb) => {
         setIsRFIFetching(true);
@@ -38,7 +39,22 @@ const useGetEventsData = () => {
         }
     }, []);
 
-    return { getRFIData, isRFIFetching, getSubmittalsData, isSubmittalsFetching, getProductData, isProductFetching }
+    const getIssuesData = useCallback(async (offset, limit, issuesCallCount, cb) => {
+        setIsIssuesFetching(true);
+        try {
+            await fetch(`${API_URL}/issues?skip=${offset*limit}&limit=${limit}&issuescount=${issuesCallCount}`);
+            cb();
+        } finally {
+            setIsIssuesFetching(false);
+        }
+    }, []);
+
+    return { 
+        getRFIData, isRFIFetching, 
+        getSubmittalsData, isSubmittalsFetching, 
+        getProductData, isProductFetching, 
+        getIssuesData, isIssuesFetching 
+    };
 };
 
 export default useGetEventsData;

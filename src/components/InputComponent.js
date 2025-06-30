@@ -6,7 +6,7 @@ const InputComponent = () => {
     // States
     const [inputText, setInputText] = useState(''); 
     // Hooks
-    const { getEventsData } = useEventProvider();
+    const { question, getEventsData } = useEventProvider();
 
     const onQuestionSubmit = (event) => {
         event.stopPropagation();
@@ -18,13 +18,13 @@ const InputComponent = () => {
     };
 
     return (
-        <div className="input-container">
+        <div className={`input-container ${question ? '' : 'without-question'}`}>
             <Textarea
                 value={inputText}
                 autoFocus={!inputText}
                 // disabled={disabled}
                 minHeight={100}
-                placeholder="Ask a question!"
+                placeholder="Ask your question here..."
                 showCount
                 showCountThreshold={0}
                 maxLength={500}

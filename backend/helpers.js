@@ -1,5 +1,5 @@
 // Constants
-export const FIXED_STREAM_TIME = 50; // in milliseconds
+export const FIXED_STREAM_TIME = 75; // in milliseconds
 export const INITIAL_CALL_NUMBER = 0;
 
 export const getTableHeaders = (data) => {
@@ -82,8 +82,27 @@ export const getSubmittalLimitedFields = (items) => {
     });
 };
 
+export const getIssuesLimitedFields = (items) => {
+    return items.map(item => {
+        return {
+            id: item.data.display_id, 
+            title: item.data.title,
+            status: item.data.status,
+            assigneeUser: item.data.assignee_user_name,
+            assigneeCompany: item.data.assignee_company_name,
+            category: item.data.category,
+            location: item.data.location_name, 
+            type: item.data.rfi_type, 
+            risk: item.data.risk, 
+            trade: item.data.trades_prediction,
+            buildingSystem: item.data.building_system_prediction, 
+            buildingSubsystem: item.data.building_subsystem_prediction, 
+        };
+    });
+};
+
 export const schedulesPara = [
-    `<p><strong>Reasoning:</strong> The question asks for all <code class="code-snips-red">Schedule</code> activities related to concrete. Looking at the schema, I can see that "concrete" could be found in the trades_prediction column, which contains AI-generated trade classifications. According to the SQL tips, when a question mentions a trade, I should filter on trades_prediction.</p>`,  
+    `<p><strong>Schedules:</strong> The question asks for all <code class="code-snips-red">Schedule</code> activities related to concrete. Looking at the schema, I can see that "concrete" could be found in the trades_prediction column, which contains AI-generated trade classifications. According to the SQL tips, when a question mentions a trade, I should filter on trades_prediction.</p>`,  
     `<p>The trades_prediction column has a possible value of 'concrete', which is what we need to filter on. Since we want to see all details about these activities, I'll use SELECT * to return all columns for activities where the trades_prediction is 'concrete'.</p>`
 ];
 

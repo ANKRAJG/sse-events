@@ -12,6 +12,7 @@ const EventProvider = ({children}) => {
     const rfiCallCountRef = useRef(0);
     const submittalCallCountRef = useRef(0);
     const productCallCountRef = useRef(0);
+    const issuesCallCountRef = useRef(0);
 
     // Common States
     const [question, setQuestion] = useState(''); 
@@ -32,8 +33,14 @@ const EventProvider = ({children}) => {
     const [productPara, setProductPara] = useState('');
     const [productHeaders, setProductHeaders] = useState([]);
     const [productData, setProductData] = useState([]);
-    const [productPagination, setProductPagination] = useState(INITIAL_PAGINATION);
     const [totalProductRecords, setTotalProductRecords] = useState(0);
+    const [productPagination, setProductPagination] = useState(INITIAL_PAGINATION);
+    // Issues States
+    const [issuesPara, setIssuesPara] = useState('');
+    const [issuesHeaders, setIssuesHeaders] = useState([]);
+    const [issuesData, setIssuesData] = useState([]);
+    const [totalIssuesRecords, setTotalIssuesRecords] = useState(0);
+    const [issuesPagination, setIssuesPagination] = useState(INITIAL_PAGINATION);
 
     // Hooks
     const { 
@@ -42,7 +49,9 @@ const EventProvider = ({children}) => {
         isSubmittalsFetching,
         getSubmittalsData,
         isProductFetching,
-        getProductData 
+        getProductData,
+        isIssuesFetching,
+        getIssuesData,  
     } = useGetEventsData();
     
     const getEventsData = (inputText) => {
@@ -51,6 +60,7 @@ const EventProvider = ({children}) => {
         setQuestion(inputText);
         setRfiPagination(INITIAL_PAGINATION);
         setProductPagination(INITIAL_PAGINATION);
+        setIssuesPagination(INITIAL_PAGINATION);
 
         // RFIs Call
         rfiCallCountRef.current = 0;
@@ -78,6 +88,15 @@ const EventProvider = ({children}) => {
             setProductData([]);
             productCallCountRef.current = productCallCountRef.current + 1;
         });
+
+        // Issues Call
+        issuesCallCountRef.current = 0;
+        getIssuesData(issuesPagination.pageIndex, issuesPagination.pageSize, issuesCallCountRef.current, () => {
+            setIssuesPara('');
+            setIssuesHeaders([]);
+            setIssuesData([]);
+            issuesCallCountRef.current = issuesCallCountRef.current + 1;
+        });
     };
 
     const scrollToBottom = useCallback(() => {
@@ -92,10 +111,11 @@ const EventProvider = ({children}) => {
     }, []);
 
     useEffect(() => {
-        if(rfiCallCountRef.current<=1 && submittalCallCountRef.current<=1 && productCallCountRef.current<=1) {
+        if(rfiCallCountRef.current<=1 && submittalCallCountRef.current<=1 && 
+                productCallCountRef.current<=1 && issuesCallCountRef.current<=1) {
             scrollToBottom();
         }
-    }, [scrollToBottom, rfiPara, rfiData, submittalsPara, submittalsData, productPara, productData]);
+    }, [scrollToBottom, rfiPara, rfiData, submittalsPara, submittalsData, productPara, productData, issuesPara, issuesData]);
 
     useEffect(() => {
         if (isRFIFetching || rfiCallCountRef.current===0) return; // Avoid fetching if data is already present
@@ -103,7 +123,7 @@ const EventProvider = ({children}) => {
         const eventSource = new EventSource(`${STREAM_API_URL}/events/rfis`);
 
         if(typeof (eventSource) !== 'undefined') {
-            console.log('successful!');
+            console.log('RFIs successful!');
         } else {
             console.log('no response!');
         }
@@ -111,7 +131,7 @@ const EventProvider = ({children}) => {
         eventSource.onmessage = event => {
             const eventData = JSON.parse(event.data);
             const { 
-                rfiPara: rfiText, rfiHeader: newRfiHeader, rfi: newRfi, totalUserRecords: totalRfiRecs,
+                rfiPara: rfiText, rfiHeader: newRfiHeader, rfi: newRfi, totalRfiRecords: totalRfiRecs,
             } = eventData;
 
             if (rfiText) {
@@ -146,7 +166,7 @@ const EventProvider = ({children}) => {
         const eventSource = new EventSource(`${STREAM_API_URL}/events/submittals`);
 
         if(typeof (eventSource) !== 'undefined') {
-            console.log('successful!');
+            console.log('Submittals successful!');
         } else {
             console.log('no response!');
         }
@@ -189,7 +209,7 @@ const EventProvider = ({children}) => {
         const eventSource = new EventSource(`${STREAM_API_URL}/events/products`);
 
         if(typeof (eventSource) !== 'undefined') {
-            console.log('successful!');
+            console.log('Schedules successful!');
         } else {
             console.log('no response!');
         }
@@ -227,6 +247,49 @@ const EventProvider = ({children}) => {
     }, [isProductFetching]);
 
     useEffect(() => {
+        if (isIssuesFetching || issuesCallCountRef.current===0) return; // Avoid fetching if data is already present
+
+        const eventSource = new EventSource(`${STREAM_API_URL}/events/issues`);
+
+        if(typeof (eventSource) !== 'undefined') {
+            console.log('Issues successful!');
+        } else {
+            console.log('no response!');
+        }
+
+        eventSource.onmessage = event => {
+            const eventData = JSON.parse(event.data);
+            const { 
+                issuesPara: issueText, issueHeader: newIssueHeader, issue: newIssue, totalIssuesRecords: totalIssues
+            } = eventData;
+
+            if (issueText) {
+                console.log('issueText = ', issueText);
+                setIssuesPara((prevPara) => prevPara + issueText);
+            }
+
+            if (newIssueHeader) {
+                console.log('newIssueHeader = ', newIssueHeader);
+                setIssuesHeaders((prevHeaders) => [...prevHeaders, newIssueHeader]);
+            }
+
+            if (newIssue) {
+                console.log('newIssue = ', newIssue);
+                setIssuesData((prevData) => [...prevData, newIssue]);
+            }
+
+            if(totalIssues) {
+                console.log('totalIssues = ', totalIssues);
+                setTotalIssuesRecords(totalIssues);
+            }
+        }
+
+        return () => {
+            eventSource.close();
+        };
+    }, [isIssuesFetching]);
+
+    useEffect(() => {
         if (isRFIFetching || rfiCallCountRef.current===0) return;
 
         // Fetch RFI data from the server
@@ -256,12 +319,23 @@ const EventProvider = ({children}) => {
         });
     }, [productPagination.pageIndex, getProductData]);
 
+    useEffect(() => {
+        if (isIssuesFetching || issuesCallCountRef.current===0) return;
+
+        // Fetch product data from the server
+        issuesCallCountRef.current = issuesCallCountRef.current + 1;
+        getIssuesData(issuesPagination.pageIndex, issuesPagination.pageSize, issuesCallCountRef.current, () => {
+            setIssuesData([]);
+        });
+    }, [issuesPagination.pageIndex, getIssuesData]);
+
     return (
         <EventContext.Provider value={{
             question, setQuestion,
             rfiPara, rfiHeaders, rfiData, totalRfiRecords, rfiPagination, setRfiPagination,
             submittalsPara, submittalsHeaders, submittalsData, totalSubmittalsRecords, submittalsPagination, setSubmittalsPagination,
             productPara, productHeaders, productData, totalProductRecords, productPagination, setProductPagination,
+            issuesPara, issuesHeaders, issuesData, totalIssuesRecords, issuesPagination, setIssuesPagination,
             getEventsData
         }}>
             {children}

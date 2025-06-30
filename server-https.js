@@ -9,11 +9,13 @@ import {
     sendProductStreams, 
     sendRFIsStreams, 
     sendSubmittalStreams, 
-    streamingResponseHeaders 
+    streamingResponseHeaders, 
+    getIssuesData,
+    sendIssuesStreams
 } from './backend/common-server-functions.js';
 import { INITIAL_CALL_NUMBER } from './backend/helpers.js';
 
-var usersCallCount = 0, submittalsCallCount = 0, productsCallCount = 0;
+var usersCallCount = 0, submittalsCallCount = 0, productsCallCount = 0, issuesCallCount = 0;
 const app = express();
 const corsOptions = {
     key: fs.readFileSync('cert/server.key'),
@@ -24,20 +26,26 @@ const corsOptions = {
 // Streaming APIs
 app.get('/events/rfis', (req, res) => {
     streamingResponseHeaders(res);
-    const canCall = usersCallCount===INITIAL_CALL_NUMBER && submittalsCallCount===INITIAL_CALL_NUMBER && productsCallCount===INITIAL_CALL_NUMBER;
+    const canCall = usersCallCount===INITIAL_CALL_NUMBER && submittalsCallCount===INITIAL_CALL_NUMBER && productsCallCount===INITIAL_CALL_NUMBER && issuesCallCount===INITIAL_CALL_NUMBER;
     sendRFIsStreams(res, canCall, req);
 });
 
 app.get('/events/submittals', (req, res) => {
     streamingResponseHeaders(res);
-    const canCall = usersCallCount===INITIAL_CALL_NUMBER && submittalsCallCount===INITIAL_CALL_NUMBER && productsCallCount===INITIAL_CALL_NUMBER;
+    const canCall = usersCallCount===INITIAL_CALL_NUMBER && submittalsCallCount===INITIAL_CALL_NUMBER && productsCallCount===INITIAL_CALL_NUMBER && issuesCallCount===INITIAL_CALL_NUMBER;
     sendSubmittalStreams(res, canCall, req);
 });
 
 app.get('/events/products', (req, res) => {
     streamingResponseHeaders(res);
-    const canCall = usersCallCount===INITIAL_CALL_NUMBER && submittalsCallCount===INITIAL_CALL_NUMBER && productsCallCount===INITIAL_CALL_NUMBER;
+    const canCall = usersCallCount===INITIAL_CALL_NUMBER && submittalsCallCount===INITIAL_CALL_NUMBER && productsCallCount===INITIAL_CALL_NUMBER && issuesCallCount===INITIAL_CALL_NUMBER;
     sendProductStreams(res, canCall, req);
+});
+
+app.get('/events/issues', (req, res) => {
+    streamingResponseHeaders(res);
+    const canCall = usersCallCount===INITIAL_CALL_NUMBER && submittalsCallCount===INITIAL_CALL_NUMBER && productsCallCount===INITIAL_CALL_NUMBER && issuesCallCount===INITIAL_CALL_NUMBER;
+    sendIssuesStreams(res, canCall, req);
 });
 
 
@@ -55,6 +63,11 @@ app.get('/submittals', (req, res) => {
 app.get('/products', (req, res) => {
     productsCallCount = Number(req.query?.productcount);
     sendHttpResponse(req, res, getProductData);
+});
+
+app.get('/issues', (req, res) => {
+    issuesCallCount = Number(req.query?.issuescount);
+    sendHttpResponse(req, res, getIssuesData);
 });
 
 // Create HTTPS server
